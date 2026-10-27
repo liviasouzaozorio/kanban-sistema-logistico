@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kanban JIT - Sistema de Fluxo Puxado</title>
+
+  <!-- ==========================================================================
+       // [PASSO 3] Organização Visual e Sistema de Cores Sinalizadas (CSS)
+       - Paleta de Cores Sinalizada (Semáforo JIT / Lean):
+         * Vermelho: A Fazer (Backlog), Alertas, Gargalos e Prioridade Alta
+         * Amarelo/Laranja: Em Andamento (Doing), Trabalho Ativo e Prioridade Média
+         * Verde: Concluído (Done), Prioridade Baixa e Fluxo Saudável
+       - Layout responsivo baseado em Flexbox e CSS Grid
+       - Design System moderno com variáveis CSS, microinterações e transições suaves
+  ========================================================================== -->
+  <style>
+    :root {
+      /* Cores Base do Sistema */
+      --bg-surface: #f8fafc;
+      --bg-card: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --border-hover: #cbd5e1;
+
+      /* [PASSO 3] Paleta Sinalizada JIT (Lean / Semáforo de Fluxo) */
+      /* Vermelho: Backlog / Gargalo / Prioridade Alta */
+      --red-signal: #ef4444;
+      --red-signal-dark: #dc2626;
+      --red-bg: #fef2f2;
+      --red-border: #fecaca;
+
+      /* Amarelo/Laranja: Doing / Fluxo Ativo / Prioridade Média */
+      --yellow-signal: #f59e0b;
+      --yellow-signal-dark: #d97706;
+      --yellow-bg: #fffbeb;
+      --yellow-border: #fde68a;
+
+      /* Verde: Done / Fluxo Saudável / Prioridade Baixa */
+      --green-signal: #10b981;
+      --green-signal-dark: #059669;
+      --green-bg: #ecfdf5;
+      --green-border: #a7f3d0;
+
+      /* Sombras e Elevações */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --radius: 12px;
+      --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-surface);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Top Bar & Branding */
+    header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--red-signal), var(--yellow-signal) 50%, var(--green-signal));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      font-size: 1.1rem;
+    }
+
+    .brand-title h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-title p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.55rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      user-select: none;
+    }
+
+    .btn-primary {
+      background-color: var(--text-main);
+      color: #ffffff;
+    }
+    .btn-primary:hover {
+      background-color: #1e293b;
+    }
+
+    .btn-secondary {
+      background-color: #ffffff;
+      border-color: var(--border-color);
+      color: var(--text-main);
+    }
+    .btn-secondary:hover {
+      background-color: #f1f5f9;
+      border-color: var(--border-hover);
+    }
+
+    .btn-danger {
+      background-color: var(--red-bg);
+      color: var(--red-signal-dark);
+      border-color: var(--red-border);
+    }
+    .btn-danger:hover {
+      background-color: #fee2e2;
+    }
+
+    /* Dashboard de Métricas */
+    .dashboard-container {
+      padding: 1.5rem 2rem 0.5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+    }
+
+    .kpi-total::before { background-color: var(--text-main); }
+    .kpi-backlog::before { background-color: var(--red-signal); }
+    .kpi-doing::before { background-color: var(--yellow-signal); }
+    .kpi-done::before { background-color: var(--green-signal); }
+    .kpi-health::before { background-color: var(--border-color); }
+
+    .kpi-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .kpi-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+    }
+
+    .kpi-subtext {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Badges de Saúde JIT */
+    .health-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.825rem;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      width: fit-content;
+    }
+
+    .health-safe {
+      background-color: var(--green-bg);
+      color: var(--green-signal-dark);
+      border: 1px solid var(--green-border);
+    }
+    .health-warning {
+      background-color: var(--yellow-bg);
+      color: var(--yellow-signal-dark);
+      border: 1px solid var(--yellow-border);
+    }
+    .health-danger {
+      background-color: var(--red-bg);
+      color: var(--red-signal-dark);
+      border: 1px solid var(--red-border);
+      animation: pulse-danger 1.5s infinite;
+    }
+
+    @keyframes pulse-danger {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    /* Barra de Progresso Global */
+    .progress-bar-wrapper {
+      padding: 0 2rem;
+      margin-top: 0.75rem;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 9999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--yellow-signal), var(--green-signal));
+      transition: width 0.4s ease;
+      border-radius: 9999px;
+    }
+
+    /* Toolbar de Filtros & WIP */
+    .controls-toolbar {
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .search-filter-box {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      flex: 1;
+      max-width: 650px;
+    }
+
+    .input-control, .select-control {
+      padding: 0.5rem 0.85rem;
+      font-size: 0.875rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-main);
+      outline: none;
+      transition: var(--transition-fast);
+    }
+
+    .input-control:focus, .select-control:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .input-search {
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .wip-adjuster {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--bg-card);
+      padding: 0.35rem 0.85rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    /* ==========================================================================
+       Quadro Kanban Principal e Colunas
+    ========================================================================== */
+    .kanban-board {
+      flex: 1;
+      padding: 0 2rem 2rem;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(290px, 1fr));
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    .kanban-column {
+      background-color: #f1f5f9;
+      border-radius: var(--radius);
+      border: 2px solid transparent;
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 270px);
+      min-height: 480px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition-fast);
+    }
+
+    /* Sinalização Visual por Cabeçalho de Coluna */
+    .column-header {
+      padding: 1rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid transparent;
+      user-select: none;
+    }
+
+    .col-title-area {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* Coluna A Fazer (Vermelho) */
+    .col-backlog .status-dot { background-color: var(--red-signal); }
+    .col-backlog .column-header {
+      border-color: var(--red-border);
+      background-color: var(--red-bg);
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .col-backlog h2 { color: var(--red-signal-dark); }
+
+    /* Coluna Em Andamento (Amarelo) */
+    .col-doing .status-dot { background-color: var(--yellow-signal); }
+    .col-doing .column-header {
+      border-color: var(--yellow-border);
+      background-color: var(--yellow-bg);
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .col-doing h2 { color: var(--yellow-signal-dark); }
+
+    /* Coluna Concluído (Verde) */
+    .col-done .status-dot { background-color: var(--green-signal); }
+    .col-done .column-header {
+      border-color: var(--green-border);
+      background-color: var(--green-bg);
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .col-done h2 { color: var(--green-signal-dark); }
+
+    .column-header h2 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .count-pill {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+
+    .wip-indicator-pill {
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      background: #ffffff;
+      border: 1px solid var(--yellow-border);
+      color: var(--yello
